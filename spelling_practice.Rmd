@@ -1,0 +1,203 @@
+---
+output: 
+    pdf_document: default
+---
+
+```{r echo=FALSE, include=FALSE}
+#### script author: G. Conway
+#### date: May 7, 2020
+```
+
+
+```{r load_pkgs, echo=FALSE, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(kableExtra)
+```
+
+```{r get_data, echo=FALSE, include=FALSE}
+# read in data
+words <- read_xlsx("spelling_sight_words.xlsx")
+```
+
+```{r keep_relevant_cols, echo=FALSE, include=FALSE}
+# save word lists from columns into variables to work with
+spelling_words <- words$`Spelling Words`
+
+sight_words <- words$`Sight Words`
+
+# clean the memory - don't need the original data frame
+rm(words)
+
+# keep only the words and not any missing values so that we can see how many 
+#   words are in each list to work with
+spelling_words <- spelling_words[!is.na(spelling_words)]
+
+sight_words <- sight_words[!is.na(sight_words)]
+```
+
+```{r set_seed, echo=FALSE, include=FALSE}
+# set the seed (any number) so we can randomly sample the word lists
+set.seed(413)
+```
+
+```{r create_new_df, echo=FALSE, include=FALSE}
+# here we'll create a new dataframe 
+#   - since the sight_words list is shorter we'll repeat it to be the same
+#       length as the spelling_words list
+#   - practicing sight words helps children recall words faster when reading
+#   - we're also removing the rows that have duplicated spelling_words
+#   -   > it's okay if duplicated sight_words are removed since they're 
+#           repeated throughout the overall list
+
+# - determine number of times that the sight_words list needs to repeat to match
+#   the length of the spelling_words list
+# - set the number of repeats to round up to the next whole number regardless of 
+#   the remainder value
+numrepeats <- ceiling(length(spelling_words) / length(sight_words))
+
+# repeat sight words to go with length of spelling words list
+sight_words <- rep(sight_words, numrepeats)
+
+# find the difference between the two word lists
+difference <- abs(length(spelling_words) - length(sight_words))
+
+# drop 3 random sight words to make vector length the same
+sight_words <- sight_words[-sample(1:length(sight_words), difference, replace = F)]
+
+# create new data frame
+newdf <- as.data.frame(cbind(spelling_words, sight_words))
+
+# drop/remove the rows with duplicated spelling_words
+newdf <- newdf[-which(duplicated(spelling_words)), ]
+
+# clean memory - remove variables no longer needed
+rm(difference, numrepeats, spelling_words, sight_words)
+```
+
+```{r echo=FALSE, include=FALSE}
+# randomly shuffle the words in the data frame
+newdf <- newdf[sample(1:nrow(newdf), nrow(newdf), replace = F), ]
+```
+
+```{r assign_words, echo=FALSE, include=FALSE}
+# how many weeks do you want to use the word list over?
+#   - NOTE: a lower number will result in longer lists for each week
+numweeks <- 8
+
+# find the number of words for each week
+#   - round up to next whole number
+numwords_per_wk <- round(nrow(newdf) / numweeks, digits = 0)
+
+# assign the weekly word lists to a variable
+assign("week1", newdf[1:numwords_per_wk, ])
+assign("week2", newdf[seq((numwords_per_wk)+1,numwords_per_wk*2, by=1), ])
+assign("week3", newdf[seq((numwords_per_wk*2)+1,numwords_per_wk*3, by=1), ])
+assign("week4", newdf[seq((numwords_per_wk*3)+1,numwords_per_wk*4, by=1), ])
+assign("week5", newdf[seq((numwords_per_wk*4)+1,numwords_per_wk*5, by=1), ])
+assign("week6", newdf[seq((numwords_per_wk*5)+1,numwords_per_wk*6, by=1), ])
+assign("week7", newdf[seq((numwords_per_wk*6)+1,numwords_per_wk*7, by=1), ])
+assign("week8", newdf[seq((numwords_per_wk*7)+1,numwords_per_wk*8, by=1), ])
+
+# clean memory
+rm(numweeks, numwords_per_wk, newdf)
+```
+
+```{r create_function, echo=FALSE, include=FALSE}
+# - how many days during the week will you be covering this?
+# - the default is 5 days, but you can change it to suit your needs
+numdays <- 5
+
+# - find number of words per day so that each day has an equal
+#   (or close to equal) number of words
+# - NOTE: all of the weeks above have the same number of rows so I'll just 
+#   pick a week to use for finding the number of words per day
+numwords_per_day <- nrow(week1) / numdays
+
+build_week <- function(weeknum){
+    kable(weeknum, "latex", longtable = T, booktabs = T, row.names = F) %>%
+        kable_styling(latex_options = c("repeat_header")) %>%
+        column_spec(1, width = "20em") %>%
+        group_rows("Monday", 1, numwords_per_day, latex_gap_space = "2em") %>%
+        group_rows("Tuesday", numwords_per_day+1, numwords_per_day*2,
+                   latex_gap_space = "2em") %>%
+        group_rows("Wednesday", (numwords_per_day*2)+1, numwords_per_day*3,
+                   latex_gap_space = "2em") %>%
+        group_rows("Thursday", (numwords_per_day*3)+1, numwords_per_day*4,
+                   latex_gap_space = "2em") %>%
+        group_rows("Friday", (numwords_per_day*4)+1, numwords_per_day*5,
+                   latex_gap_space = "2em")
+}
+
+# clean memory
+rm(numdays)
+```
+
+
+# Week 1
+
+```{r week1, echo=F}
+build_week(week1)
+```
+
+\newpage  
+
+# Week 2
+
+```{r week2, echo=F}
+build_week(week2)
+```
+
+\newpage  
+
+# Week 3
+
+```{r week3, echo=F}
+build_week(week3)
+```
+
+\newpage  
+
+# Week 4
+
+```{r week4, echo=F}
+build_week(week4)
+```
+
+\newpage  
+
+# Week 5
+
+```{r week5, echo=F}
+build_week(week5)
+```
+
+\newpage  
+
+# Week 6
+
+```{r week6, echo=F}
+build_week(week6)
+```
+
+\newpage  
+
+# Week 7
+
+```{r week7, echo=F}
+build_week(week7)
+```
+
+\newpage  
+
+# Week 8
+
+```{r week8, echo=F}
+build_week(week8)
+```
+
+
+```{r clean_environment, echo=FALSE, include=FALSE}
+rm(list = ls())
+gc()
+```
